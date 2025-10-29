@@ -28,8 +28,6 @@ venv.bak/
 *.pid
 *.seed
 *.pid.lock
-**/Dockerfile*
-**/docker-compose*.yml
 *.db
 
 .DS_Store

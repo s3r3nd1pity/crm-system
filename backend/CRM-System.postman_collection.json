@@ -1,0 +1,682 @@
+{
+  "info": {
+    "_postman_id": "f45a7a0e-4173-46da-a727-81b94560b030",
+    "name": "CRM System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "CRM System API collection with auth, manager admin flows, orders, groups, and export. Tokens auto-saved to environment."
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save tokens from admin login",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('access_token', data.access);",
+                  "  pm.environment.set('refresh_token', data.refresh);",
+                  "  pm.environment.set('active_user_role', 'admin');",
+                  "} else {",
+                  "  console.warn('Login failed');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// ensure body uses admin creds before request",
+                  "pm.request.body.update(JSON.stringify({",
+                  "  email: pm.environment.get('admin_email'),",
+                  "  password: pm.environment.get('admin_password')",
+                  "}));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{BASE_URL}}/api/users/token/"
+          }
+        },
+        {
+          "name": "Manager Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save tokens from manager login",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('access_token', data.access);",
+                  "  pm.environment.set('refresh_token', data.refresh);",
+                  "  pm.environment.set('active_user_role', 'manager');",
+                  "} else {",
+                  "  console.warn('Login failed');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// ensure body uses manager creds before request",
+                  "pm.request.body.update(JSON.stringify({",
+                  "  email: pm.environment.get('manager_email'),",
+                  "  password: pm.environment.get('manager_password')",
+                  "}));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{BASE_URL}}/api/users/token/"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save new access token after refresh",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access) {",
+                  "    pm.environment.set('access_token', data.access);",
+                  "  }",
+                  "} else {",
+                  "  console.warn('Token refresh failed, trying relogin');",
+                  "  const role = pm.environment.get('active_user_role') || 'admin';",
+                  "  if (role === 'manager') {",
+                  "    postman.setNextRequest('Manager Login');",
+                  "  } else {",
+                  "    postman.setNextRequest('Admin Login');",
+                  "  }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// attach refresh token into request body before refresh call",
+                  "pm.request.body.update(JSON.stringify({",
+                  "  refresh: pm.environment.get('refresh_token')",
+                  "}));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{BASE_URL}}/api/users/token/refresh/"
+          }
+        },
+        {
+          "name": "Current User / Me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/api/users/me/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin & Managers",
+      "item": [
+        {
+          "name": "Create Manager (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.manager@example.com\",\n  \"first_name\": \"Luna\",\n  \"last_name\": \"Star\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/users/managers/create/"
+          }
+        },
+        {
+          "name": "List Managers (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/api/users/managers/"
+          }
+        },
+        {
+          "name": "Activate Manager (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": "{{BASE_URL}}/api/users/managers/:managerId/activate/"
+          },
+          "response": [
+            {
+              "name": "200 activation link example",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\"activation_link\": \"http://localhost:8000/api/users/activate/<JWT_TOKEN>/\"}"
+            }
+          ]
+        },
+        {
+          "name": "Recovery Manager (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": "{{BASE_URL}}/api/users/managers/:managerId/recovery/"
+          },
+          "response": [
+            {
+              "name": "200 recovery link example",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\"recovery_link\": \"http://localhost:8000/api/users/recovery/<JWT_TOKEN>/\"}"
+            }
+          ]
+        },
+        {
+          "name": "Manager Set Password (via activation link)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"manager123\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/users/activate/<JWT_TOKEN>/"
+          }
+        },
+        {
+          "name": "Manager Password Recovery (via recovery link)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"newPasswordHere\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/users/recovery/<JWT_TOKEN>/"
+          }
+        },
+        {
+          "name": "Ban / Unban Manager (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"ban\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/users/managers/:managerId/action/"
+          }
+        },
+        {
+          "name": "Managers & Global Statistics (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/api/users/statistics/"
+          },
+          "response": [
+            {
+              "name": "200 stats example",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"global\": {\n    \"total\": 120,\n    \"New\": 30,\n    \"InWork\": 40,\n    \"Agree\": 20,\n    \"Disagree\": 10,\n    \"Dubbing\": 5,\n    \"null\": 15\n  },\n  \"managers\": [\n    {\n      \"id\": 3,\n      \"email\": \"gavgav@gmail.com\",\n      \"first_name\": \"Luna\",\n      \"last_name\": \"Star\",\n      \"is_active\": true,\n      \"is_banned\": false,\n      \"date_joined\": \"2025-10-26T19:20:30Z\",\n      \"last_login\": \"2025-10-29T00:15:00Z\",\n      \"stats\": {\n        \"total\": 40,\n        \"in_work\": 15,\n        \"agree\": 10,\n        \"disagree\": 5,\n        \"dubbing\": 2,\n        \"new\": 8\n      }\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "List Orders (paginated)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders/?page=1",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Orders (with filters)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders/?mine=true&status=New&age=31&name=\u041e\u043b\u0430",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "mine",
+                  "value": "true"
+                },
+                {
+                  "key": "status",
+                  "value": "New"
+                },
+                {
+                  "key": "age",
+                  "value": "31"
+                },
+                {
+                  "key": "name",
+                  "value": "\u041e\u043b\u0430"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Orders (ordered)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders/?ordering=-age",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "ordering",
+                  "value": "-age"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retrieve Order Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/api/orders/:orderId/"
+          }
+        },
+        {
+          "name": "Update Order (PATCH)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"New\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/orders/:orderId/edit/"
+          }
+        },
+        {
+          "name": "Add Comment to Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Test comment\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/orders/:orderId/comments/"
+          }
+        },
+        {
+          "name": "Export Orders (Excel)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/api/orders/export/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "List Groups",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/api/orders/groups/"
+          }
+        },
+        {
+          "name": "Create Group",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"FE-2025\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/orders/groups/"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global prerequest hook: if we have a bearer token, apply it",
+          "if (pm && pm.request && pm.request.auth && pm.request.auth.type === 'bearer') {",
+          "  const token = pm.environment.get('access_token');",
+          "  if (token) {",
+          "    pm.request.auth.parameters().add({key: 'token', value: token});",
+          "  }",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test hook: if 401, try refresh automatically",
+          "if (pm.response && pm.response.code === 401) {",
+          "  console.warn('401 detected \u2192 scheduling Refresh Token request');",
+          "  postman.setNextRequest('Auth/Refresh Token');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": []
+}

@@ -4,11 +4,13 @@ import {useEffect, useState} from 'react'
 import {managersApi} from '@/services/managers.api.services'
 import {IStatisticsResponse} from '@/models/IStatistics'
 import {IManager} from '@/models/IManager'
+import {CreateManagerModal} from '@/components/admin/CreateManagerModal'
 
 export const AdminPanelComponent = () => {
     const [stats, setStats] = useState<IStatisticsResponse | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [showModal, setShowModal] = useState(false)
 
     const loadStats = async () => {
         try {
@@ -26,18 +28,6 @@ export const AdminPanelComponent = () => {
         loadStats()
     }, [])
 
-    const handleCreate = async () => {
-        const email = prompt('Enter email:')
-        if (!email) return
-        try {
-            await managersApi.create({email})
-            await loadStats()
-            alert('Manager created.')
-        } catch {
-            alert('Error creating manager.')
-        }
-    }
-
     const handleAction = async (id: number, action: 'ban' | 'unban') => {
         try {
             if (action === 'ban') await managersApi.ban(id)
@@ -48,11 +38,13 @@ export const AdminPanelComponent = () => {
         }
     }
 
-
     const handleActivate = async (id: number) => {
         try {
             const link = await managersApi.activate(id)
-            const frontendLink = link.replace('http://localhost:8000/api/users/activate/', 'http://localhost:3000/activate/')
+            const frontendLink = link.replace(
+                'http://localhost:8000/api/users/activate/',
+                'http://localhost:3000/activate/'
+            )
             await navigator.clipboard.writeText(frontendLink)
             alert('Activation link copied!')
         } catch {
@@ -63,14 +55,16 @@ export const AdminPanelComponent = () => {
     const handleRecovery = async (id: number) => {
         try {
             const link = await managersApi.recovery(id)
-            const frontendLink = link.replace('http://localhost:8000/api/users/recovery/', 'http://localhost:3000/recovery/')
+            const frontendLink = link.replace(
+                'http://localhost:8000/api/users/recovery/',
+                'http://localhost:3000/recovery/'
+            )
             await navigator.clipboard.writeText(frontendLink)
             alert('Recovery link copied!')
         } catch {
             alert('Recovery failed.')
         }
     }
-
 
     if (loading) return <p className="text-center py-12 text-gray-500">Loading...</p>
     if (error) return <p className="text-center text-red-500">{error}</p>
@@ -82,7 +76,7 @@ export const AdminPanelComponent = () => {
                 <div className="flex justify-between items-center mb-10">
                     <h1 className="text-3xl font-bold text-pink-600">Admin Panel</h1>
                     <button
-                        onClick={handleCreate}
+                        onClick={() => setShowModal(true)}
                         className="px-5 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition"
                     >
                         + Create Manager
@@ -93,8 +87,10 @@ export const AdminPanelComponent = () => {
                     <h2 className="text-lg font-semibold text-pink-600 mb-4">Orders Statistics</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                         {Object.entries(stats.global).map(([key, value]) => (
-                            <div key={key}
-                                 className="bg-pink-50 border border-pink-100 rounded-xl p-4 text-center shadow-sm">
+                            <div
+                                key={key}
+                                className="bg-pink-50 border border-pink-100 rounded-xl p-4 text-center shadow-sm"
+                            >
                                 <p className="text-pink-600 font-semibold">{key}</p>
                                 <p className="text-gray-700">{value}</p>
                             </div>
@@ -130,7 +126,9 @@ export const AdminPanelComponent = () => {
                                 <td className="p-3 text-left">{m.first_name || '—'}</td>
                                 <td className="p-3 text-left">{m.last_name || '—'}</td>
                                 <td className="p-3">{m.is_active ? '✅' : '❌'}</td>
-                                <td className="p-3">{m.last_login ? new Date(m.last_login).toLocaleDateString() : '—'}</td>
+                                <td className="p-3">
+                                    {m.last_login ? new Date(m.last_login).toLocaleDateString() : '—'}
+                                </td>
                                 <td className="p-3">{m.stats?.total || 0}</td>
                                 <td className="p-3">{m.stats?.in_work || 0}</td>
                                 <td className="p-3">{m.stats?.agree || 0}</td>
@@ -175,6 +173,13 @@ export const AdminPanelComponent = () => {
                     </table>
                 </div>
             </div>
+
+            {showModal && (
+                <CreateManagerModal
+                    onClose={() => setShowModal(false)}
+                    onCreated={loadStats}
+                />
+            )}
         </div>
     )
 }

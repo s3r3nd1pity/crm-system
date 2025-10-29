@@ -29,7 +29,8 @@ export const CreateManagerModal = ({ onClose, onCreated }: Props) => {
       })
       onCreated()
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // @ts-ignore
       setError(err.response?.data?.email?.[0] || 'Error creating manager')
     } finally {
       setLoading(false)

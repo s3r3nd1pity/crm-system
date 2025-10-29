@@ -14,10 +14,16 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const metadata: Metadata = {
-  title: 'CRM Frontend',
-  description: 'CRM system frontend',
+export const metadata = {
+  title: 'CRM System',
+  description: 'Internal CRM Dashboard',
+  icons: {
+    icon: '/icons/heart.jpg',
+    shortcut: '/icons/heart.jpg',
+    apple: '/icons/heart.jpg',
+  },
 }
+
 
 export default function RootLayout({
   children,
@@ -39,16 +45,10 @@ export default function RootLayout({
                 fontSize: '0.9rem',
               },
               success: {
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
-                },
+                iconTheme: { primary: '#10b981', secondary: '#fff' },
               },
               error: {
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
-                },
+                iconTheme: { primary: '#ef4444', secondary: '#fff' },
               },
             }}
           />
@@ -57,6 +57,7 @@ export default function RootLayout({
     </html>
   )
 }
+
 
 
 

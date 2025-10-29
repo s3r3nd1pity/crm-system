@@ -1,4 +1,3 @@
-
 # CRM System
 
 Full-stack CRM application built with **Django REST Framework (backend)** and **Next.js (frontend)**.  
@@ -22,7 +21,10 @@ git clone https://github.com/s3r3nd1pity/crm-system.git
 cd crm-system
 ```
 
+---
+
 ### 2️⃣ Environment variables
+
 Create `.env` in the root folder using `.env.example` as a template.
 
 Example:
@@ -37,10 +39,9 @@ DB_HOST=owu.linkpc.net
 DB_PORT=3306
 
 BACKEND_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:3000
 ```
 
-> The project uses OWU cloud MySQL as required by the task.
 
 ---
 
@@ -48,12 +49,30 @@ FRONTEND_URL=http://localhost:5173
 ```bash
 docker-compose up --build
 ```
+
 This starts both containers:
-- `crm_backend` → Django + DRF on port **8000**
-- `crm_frontend` → Next.js on port **5173**
+- **crm_backend** → Django + DRF on port **8000**
+- **crm_frontend** → Next.js on port **3000**
 
 Swagger docs: [http://localhost:8000/api/docs/swagger/](http://localhost:8000/api/docs/swagger/)  
 Frontend: [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 💻 Frontend Setup (manual, if not using Docker)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then open **http://localhost:3000**
+
+`.env` for frontend:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+```
 
 ---
 

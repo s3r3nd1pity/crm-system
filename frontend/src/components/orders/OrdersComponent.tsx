@@ -14,6 +14,8 @@ export const OrdersComponent = () => {
     const [orders, setOrders] = useState<IOrder[]>([])
     const [count, setCount] = useState(0)
     const [loading, setLoading] = useState(true)
+    const [openOrderId, setOpenOrderId] = useState<number | null>(null)
+
 
     const pageSize = 25
     const currentPage = Number(searchParams.get('page')) || 1
@@ -62,7 +64,7 @@ export const OrdersComponent = () => {
 
     return (
         <div className="p-6">
-            <OrdersFiltersComponent/>
+            <OrdersFiltersComponent ordering={ordering}/>
             {loading ? (
                 <div className="flex justify-center items-center h-64 text-pink-500 text-lg">
                     Loading orders...
@@ -111,9 +113,19 @@ export const OrdersComponent = () => {
                             </thead>
                             <tbody>
                             {orders.map((order) => (
-                                <OrderComponent key={order.id} order={order}/>
+                                <OrderComponent
+                                    key={order.id}
+                                    order={order}
+                                    isOpen={openOrderId === order.id}
+                                    onToggle={() =>
+                                        setOpenOrderId((prev) =>
+                                            prev === order.id ? null : order.id
+                                        )
+                                    }
+                                />
                             ))}
                             </tbody>
+
                         </table>
                     </div>
 

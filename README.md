@@ -47,7 +47,7 @@ FRONTEND_URL=http://localhost:3000
 
 ### 3️⃣ Run with Docker
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 This starts both containers:

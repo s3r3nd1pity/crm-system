@@ -3,18 +3,21 @@
 import { FC, useState } from 'react'
 import { IOrder } from '@/models/IOrder'
 import { ordersApi } from '@/services/orders.api.services'
-import { useUser } from '@/hooks/useUser'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { CommentsComponent } from '@/components/orders/CommentsComponent'
 import { EditOrderModalComponent } from '@/components/orders/EditOrderModalComponent'
 
-type Props = { order: IOrder }
+type Props = {
+  order: IOrder
+  isOpen: boolean
+  onToggle: () => void
+}
 
-export const OrderComponent: FC<Props> = ({ order }) => {
-  const [isOpen, setIsOpen] = useState(false)
+export const OrderComponent: FC<Props> = ({ order, isOpen, onToggle }) => {
   const [comments, setComments] = useState(order.comments || [])
   const [editing, setEditing] = useState(false)
   const [localOrder, setLocalOrder] = useState<IOrder>(order)
-  const user = useUser()
+  const { user } = useAuthContext()
 
   const canEdit = user && localOrder.manager === user.last_name
   const isFree = !localOrder.manager
@@ -28,15 +31,11 @@ export const OrderComponent: FC<Props> = ({ order }) => {
   const handleOrderUpdated = (updated: IOrder) => {
     setLocalOrder(updated)
     setEditing(false)
-    setIsOpen(true)
   }
 
   return (
     <>
-      <tr
-        onClick={() => setIsOpen(!isOpen)}
-        className="cursor-pointer hover:bg-pink-50 transition"
-      >
+      <tr onClick={onToggle} className="cursor-pointer hover:bg-pink-50 transition">
         <td className="p-2 text-xs sm:text-sm text-center w-[40px]">{localOrder.id}</td>
         <td className="p-2 text-xs sm:text-sm truncate max-w-[100px]">{localOrder.name || '-'}</td>
         <td className="p-2 text-xs sm:text-sm truncate max-w-[100px]">{localOrder.surname || '-'}</td>
@@ -46,40 +45,26 @@ export const OrderComponent: FC<Props> = ({ order }) => {
         <td className="p-2 text-xs sm:text-sm truncate max-w-[80px]">{localOrder.course || '-'}</td>
         <td className="p-2 text-xs sm:text-sm truncate max-w-[80px]">{localOrder.course_format || '-'}</td>
         <td className="p-2 text-xs sm:text-sm truncate max-w-[80px]">{localOrder.course_type || '-'}</td>
-        <td className="p-2 text-xs sm:text-sm text-pink-600 font-medium truncate max-w-[90px]">
-          {localOrder.status || 'New'}
-        </td>
+        <td className="p-2 text-xs sm:text-sm text-pink-600 font-medium truncate max-w-[90px]">{localOrder.status || 'New'}</td>
         <td className="p-2 text-xs sm:text-sm text-center w-[60px]">{localOrder.sum ?? '-'}</td>
         <td className="p-2 text-xs sm:text-sm text-center w-[60px]">{localOrder.alreadyPaid ?? '-'}</td>
         <td className="p-2 text-xs sm:text-sm truncate max-w-[100px]">{localOrder.group?.name || '-'}</td>
-        <td className="p-2 text-xs sm:text-sm truncate max-w-[100px]">
-          {new Date(localOrder.created_at).toLocaleDateString()}
-        </td>
-        <td className="p-2 text-xs sm:text-sm text-pink-800 truncate max-w-[90px]">
-          {localOrder.manager || '-'}
-        </td>
+        <td className="p-2 text-xs sm:text-sm truncate max-w-[100px]">{new Date(localOrder.created_at).toLocaleDateString()}</td>
+        <td className="p-2 text-xs sm:text-sm text-pink-800 truncate max-w-[90px]">{localOrder.manager || '-'}</td>
       </tr>
 
       {isOpen && (
         <tr className="bg-pink-50 border-t border-pink-200">
           <td colSpan={15} className="p-4 text-sm text-gray-700">
             <div className="flex flex-col gap-2">
-              <p>
-                <span className="font-semibold text-pink-700">Message:</span>{' '}
-                {localOrder.msg || '—'}
-              </p>
-              <p>
-                <span className="font-semibold text-pink-700">UTM:</span>{' '}
-                {localOrder.utm || '—'}
-              </p>
-
+              <p><span className="font-semibold text-pink-700">Message:</span> {localOrder.msg || '—'}</p>
+              <p><span className="font-semibold text-pink-700">UTM:</span> {localOrder.utm || '—'}</p>
               <CommentsComponent
                 orderId={localOrder.id}
                 initialComments={comments}
                 canComment={!!canEdit || isFree}
                 onCommentsUpdated={handleCommentsUpdated}
               />
-
               {(canEdit || isFree) && (
                 <div className="mt-4 flex justify-end">
                   <button
@@ -105,3 +90,4 @@ export const OrderComponent: FC<Props> = ({ order }) => {
     </>
   )
 }
+

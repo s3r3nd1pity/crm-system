@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { ClientLayoutComponent } from '@/components/layout/ClientLayoutComponent'
 import { Toaster } from 'react-hot-toast'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'CRM System',
   description: 'Internal CRM Dashboard',
   icons: {
@@ -24,39 +25,39 @@ export const metadata = {
   },
 }
 
-
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ClientLayoutComponent>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: '#fff',
-                color: '#333',
-                border: '1px solid #eee',
-                fontSize: '0.9rem',
-              },
-              success: {
-                iconTheme: { primary: '#10b981', secondary: '#fff' },
-              },
-              error: {
-                iconTheme: { primary: '#ef4444', secondary: '#fff' },
-              },
-            }}
-          />
-        </ClientLayoutComponent>
+        <AuthProvider>
+          <ClientLayoutComponent>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                style: {
+                  background: '#fff',
+                  color: '#333',
+                  border: '1px solid #eee',
+                  fontSize: '0.9rem',
+                },
+                success: {
+                  iconTheme: { primary: '#10b981', secondary: '#fff' },
+                },
+                error: {
+                  iconTheme: { primary: '#ef4444', secondary: '#fff' },
+                },
+              }}
+            />
+          </ClientLayoutComponent>
+        </AuthProvider>
       </body>
     </html>
   )
 }
+
 
 
 

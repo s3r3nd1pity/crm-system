@@ -41,6 +41,7 @@ class OrderListView(generics.ListAPIView):
         mine = self.request.query_params.get("mine")
         if mine and mine.lower() in ["true", "1"]:
             queryset = queryset.filter(manager=self.request.user)
+
         return queryset
 
 
@@ -60,6 +61,7 @@ class OrderUpdateView(generics.UpdateAPIView):
         if new_status == Order.Status.NEW:
             serializer.save(status=Order.Status.NEW, manager=None)
             return
+
 
         if order.manager is None:
             if not new_status or new_status == Order.Status.NEW:
@@ -117,23 +119,11 @@ class ExportOrdersExcelView(generics.GenericAPIView):
     filterset_class = OrderFilter
     search_fields = ["name", "surname", "email", "phone", "utm", "msg"]
     ordering_fields = [
-        "id",
-        "name",
-        "surname",
-        "email",
-        "phone",
-        "age",
-        "course",
-        "course_format",
-        "course_type",
-        "status",
-        "sum",
-        "alreadyPaid",
-        "group__name",
-        "manager__last_name",
+        "id", "name", "surname", "email", "phone", "age",
+        "course", "course_format", "course_type", "status",
+        "sum", "alreadyPaid", "group__name", "manager__last_name",
         "created_at",
     ]
-    ordering = ["-created_at"]
 
     def get_queryset(self):
         queryset = Order.objects.select_related("manager", "group").prefetch_related("comments")
@@ -146,29 +136,18 @@ class ExportOrdersExcelView(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Orders"
+
         headers = [
-            "ID",
-            "Name",
-            "Surname",
-            "Email",
-            "Phone",
-            "Age",
-            "Course",
-            "Course Format",
-            "Course Type",
-            "Status",
-            "Sum",
-            "Already Paid",
-            "UTM",
-            "Message",
-            "Group",
-            "Manager",
-            "Created At",
+            "ID", "Name", "Surname", "Email", "Phone", "Age", "Course",
+            "Course Format", "Course Type", "Status", "Sum", "Already Paid",
+            "UTM", "Message", "Group", "Manager", "Created At",
         ]
         ws.append(headers)
+
         for order in queryset:
             ws.append([
                 order.id,
@@ -189,7 +168,10 @@ class ExportOrdersExcelView(generics.GenericAPIView):
                 order.manager.last_name if order.manager else "",
                 order.created_at.strftime("%Y-%m-%d %H:%M") if order.created_at else "",
             ])
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
         response["Content-Disposition"] = 'attachment; filename="orders.xlsx"'
         wb.save(response)
         return response

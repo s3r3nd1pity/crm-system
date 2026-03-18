@@ -47,8 +47,8 @@ class ManagerCreateSerializer(serializers.ModelSerializer):
 
         extra_kwargs = {
             "email": {"required": True},
-            "first_name": {"required": False, "allow_blank": True},
-            "last_name": {"required": False, "allow_blank": True},
+            "first_name": {"required": True, "allow_blank": False},
+            "last_name": {"required": True, "allow_blank": False},
         }
 
     def validate_email(self, value):
@@ -56,11 +56,21 @@ class ManagerCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("User with this email already exists.")
         return value
 
+    def validate_first_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("First name cannot be empty.")
+        return value
+
+    def validate_last_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Last name cannot be empty.")
+        return value
+
     def create(self, validated_data):
         user = User.objects.create(
             email=validated_data["email"],
-            first_name=validated_data.get("first_name", ""),
-            last_name=validated_data.get("last_name", ""),
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
             role=User.Role.MANAGER,
             is_active=False,
             is_banned=False,
@@ -68,3 +78,22 @@ class ManagerCreateSerializer(serializers.ModelSerializer):
         user.set_unusable_password()
         user.save()
         return user
+
+class ManagerActionSerializer(serializers.ModelSerializer):
+    action = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["action"]
+
+    def update(self, instance, validated_data):
+        action = validated_data.get("action")
+        if action == "ban":
+            instance.is_banned = True
+            instance.save(update_fields=["is_banned"])
+        elif action == "unban":
+            instance.is_banned = False
+            instance.save(update_fields=["is_banned"])
+        else:
+            raise serializers.ValidationError("Invalid action")
+        return instance

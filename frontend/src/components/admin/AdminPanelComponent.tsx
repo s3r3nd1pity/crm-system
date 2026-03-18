@@ -135,7 +135,7 @@ export const AdminPanelComponent = () => {
                                 <td className="p-3">{m.stats?.disagree || 0}</td>
                                 <td className="p-3">{m.stats?.dubbing || 0}</td>
                                 <td className="p-3 flex flex-wrap gap-2 justify-center">
-                                    {m.is_active ? (
+                                    {m.is_active && !m.is_banned && (
                                         <>
                                             <button
                                                 onClick={() => handleAction(m.id, 'ban')}
@@ -150,7 +150,26 @@ export const AdminPanelComponent = () => {
                                                 Recovery password
                                             </button>
                                         </>
-                                    ) : (
+                                    )}
+
+                                    {!m.is_active && !m.is_banned && (
+                                        <>
+                                            <button
+                                                onClick={() => handleActivate(m.id)}
+                                                className="text-xs px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                            >
+                                                Activate
+                                            </button>
+                                            <button
+                                                disabled
+                                                className="text-xs px-3 py-1.5 bg-gray-300 text-white rounded cursor-not-allowed"
+                                            >
+                                                Unban
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {m.is_banned && (
                                         <>
                                             <button
                                                 onClick={() => handleAction(m.id, 'unban')}
@@ -159,10 +178,10 @@ export const AdminPanelComponent = () => {
                                                 Unban
                                             </button>
                                             <button
-                                                onClick={() => handleActivate(m.id)}
-                                                className="text-xs px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                onClick={() => handleRecovery(m.id)}
+                                                className="text-xs px-3 py-1.5 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                                             >
-                                                Activate
+                                                Recovery password
                                             </button>
                                         </>
                                     )}

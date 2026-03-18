@@ -8,7 +8,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.response import Response
 
 from .models import User
-from .serializers import UserSerializer, ManagerSerializer, SetPasswordSerializer, ManagerCreateSerializer
+from .serializers import UserSerializer, ManagerSerializer, SetPasswordSerializer, ManagerCreateSerializer, \
+    ManagerActionSerializer
 from .permissions import IsAdmin
 from ..orders.models import Order
 
@@ -30,7 +31,7 @@ class ManagerListView(generics.ListAPIView):
 
 
 class ManagerActionView(generics.UpdateAPIView):
-    serializer_class = ManagerSerializer
+    serializer_class = ManagerActionSerializer
     permission_classes = [IsAdmin]
     queryset = User.objects.filter(role=User.Role.MANAGER)
 
@@ -38,18 +39,15 @@ class ManagerActionView(generics.UpdateAPIView):
         manager = self.get_object()
         action = request.data.get("action")
 
-        if action == "ban":
-            manager.is_active = False
-            manager.save(update_fields=["is_active"])
-            return Response({"detail": "Manager deactivated."}, status=status.HTTP_200_OK)
-        if action == "unban":
-            if not manager.is_active:
-                manager.is_active = True
-                manager.save(update_fields=["is_active"])
-                return Response({"detail": "Manager activated."}, status=status.HTTP_200_OK)
-            return Response({"detail": "Already active."}, status=status.HTTP_200_OK)
+        if action == "activate":
+            token = AccessToken.for_user(manager)
+            link = f"{settings.BACKEND_URL}/api/users/activate/{token}/"
+            return Response({"activation_link": link}, status=200)
 
-        return Response({"detail": "Invalid action."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(manager, data={"action": action}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": f"Action '{action}' performed successfully."})
 
 
 class ActivateManagerView(APIView):
@@ -143,12 +141,10 @@ class ManagerStatisticsView(APIView):
         orders = Order.objects.all()
         global_stats = {
             "total": orders.count(),
-            "New": orders.filter(status=Order.Status.NEW).count(),
-            "InWork": orders.filter(status=Order.Status.IN_WORK).count(),
+            "New": orders.filter(status=Order.Status.NEW).count() + orders.filter(status__isnull=True).count(),            "InWork": orders.filter(status=Order.Status.IN_WORK).count(),
             "Agree": orders.filter(status=Order.Status.AGREE).count(),
             "Disagree": orders.filter(status=Order.Status.DISAGREE).count(),
             "Dubbing": orders.filter(status=Order.Status.DUBBING).count(),
-            "null": orders.filter(status__isnull=True).count(),
         }
 
         managers = []

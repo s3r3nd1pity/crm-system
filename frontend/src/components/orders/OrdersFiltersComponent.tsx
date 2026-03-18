@@ -3,26 +3,27 @@
 import {useEffect, useRef, useState} from 'react'
 import {useRouter, useSearchParams} from 'next/navigation'
 import api from '@/services/axios.api.services'
-import {ExportExcelComponent} from "@/components/orders/ExportExcelComponent"
-import {IGroup} from "@/models/IGroup"
+import {ExportExcelComponent} from '@/components/orders/ExportExcelComponent'
+import {IGroup} from '@/models/IGroup'
+import {isValidDateRange, normalizeAge, normalizePhone, stripSpaces} from "@/utils/validation";
+
 
 export const OrdersFiltersComponent = () => {
     const router = useRouter()
     const searchParams = useSearchParams()
-
     const [filters, setFilters] = useState({
-        name: searchParams.get('name') || '',
-        surname: searchParams.get('surname') || '',
-        email: searchParams.get('email') || '',
-        phone: searchParams.get('phone') || '',
+        name: stripSpaces(searchParams.get('name') || ''),
+        surname: stripSpaces(searchParams.get('surname') || ''),
+        email: stripSpaces(searchParams.get('email') || ''),
+        phone: stripSpaces(searchParams.get('phone') || ''),
         age: searchParams.get('age') || '',
-        status: searchParams.get('status') || '',
-        course: searchParams.get('course') || '',
-        course_format: searchParams.get('course_format') || '',
-        course_type: searchParams.get('course_type') || '',
-        group: searchParams.get('group') || '',
-        start_date: searchParams.get('start_date') || '',
-        end_date: searchParams.get('end_date') || '',
+        status: stripSpaces(searchParams.get('status') || ''),
+        course: stripSpaces(searchParams.get('course') || ''),
+        course_format: stripSpaces(searchParams.get('course_format') || ''),
+        course_type: stripSpaces(searchParams.get('course_type') || ''),
+        group: stripSpaces(searchParams.get('group') || ''),
+        start_date: stripSpaces(searchParams.get('start_date') || ''),
+        end_date: stripSpaces(searchParams.get('end_date') || ''),
         mine: searchParams.get('mine') === 'true',
     })
 
@@ -32,7 +33,7 @@ export const OrdersFiltersComponent = () => {
     const statuses = [
         {label: 'All statuses', value: ''},
         {label: 'New', value: 'New'},
-        {label: 'In work', value: 'In work'},
+        {label: 'In work', value: 'Inwork'},
         {label: 'Agree', value: 'Agree'},
         {label: 'Disagree', value: 'Disagree'},
         {label: 'Dubbing', value: 'Dubbing'},
@@ -78,21 +79,34 @@ export const OrdersFiltersComponent = () => {
     useEffect(() => {
         const handler = setTimeout(() => {
             const params = new URLSearchParams()
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value) params.set(key, String(value))
+            Object.entries(filters).forEach(([k, v]) => {
+                if (v !== '' && v !== false) params.set(k, String(v))
             })
-            const paramStr = params.toString()
-            if (paramStr !== prevParams.current) {
-                prevParams.current = paramStr
-                router.replace(`?${paramStr}`, {scroll: false})
+            const currentOrdering = searchParams.get('ordering') || ''
+            if (currentOrdering) params.set('ordering', currentOrdering)
+
+            const s = params.toString()
+            if (s !== prevParams.current) {
+                prevParams.current = s
+                router.replace(`?${s}`, {scroll: false})
             }
         }, 500)
-
         return () => clearTimeout(handler)
-    }, [filters, router])
+    }, [filters, searchParams.toString(), router])
 
     const updateQuery = (key: string, value: string | boolean) => {
-        setFilters(prev => ({...prev, [key]: value}))
+        setFilters(prev => {
+            let v: string | boolean = value
+            if (typeof v === 'string') v = stripSpaces(v)
+            if (key === 'age' && typeof v === 'string') v = normalizeAge(v)
+            if (key === 'phone' && typeof v === 'string') v = normalizePhone(v)
+            if (key === 'start_date' || key === 'end_date') {
+                const s = key === 'start_date' ? String(v) : prev.start_date
+                const e = key === 'end_date' ? String(v) : prev.end_date
+                if (!isValidDateRange(s, e)) return prev
+            }
+            return {...prev, [key]: v}
+        })
     }
 
     const resetFilters = () => {
@@ -114,7 +128,6 @@ export const OrdersFiltersComponent = () => {
         prevParams.current = ''
         router.replace('?', {scroll: false})
     }
-
 
     return (
         <div className="mb-5 p-5 bg-pink-50 rounded-2xl shadow-sm">
@@ -152,9 +165,7 @@ export const OrdersFiltersComponent = () => {
                 <select value={filters.group} onChange={e => updateQuery('group', e.target.value)}
                         className="px-3 py-2 border rounded-lg bg-white w-full focus:ring-2 focus:ring-pink-400">
                     <option value="">All groups</option>
-                    {groups.map(g => (
-                        <option key={g.id} value={g.name}>{g.name}</option>
-                    ))}
+                    {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                 </select>
                 <input type="date" value={filters.start_date} onChange={e => updateQuery('start_date', e.target.value)}
                        className="px-3 py-2 border rounded-lg w-full bg-white focus:ring-2 focus:ring-pink-400"/>
@@ -169,7 +180,7 @@ export const OrdersFiltersComponent = () => {
                     My orders
                 </label>
                 <div className="flex gap-3">
-                    <ExportExcelComponent filters={filters}/>
+                    <ExportExcelComponent filters={filters} ordering={searchParams.get('ordering') || ''}/>
                     <button onClick={resetFilters} className="p-2 rounded-lg hover:bg-pink-100 transition">
                         <img src="/icons/reset.png" alt="Reset" className="w-6 h-6"/>
                     </button>
@@ -178,8 +189,3 @@ export const OrdersFiltersComponent = () => {
         </div>
     )
 }
-
-
-
-
-

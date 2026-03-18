@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Order, Comment, Group
+from .validators import validate_no_spaces, validate_positive
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -23,6 +24,16 @@ class OrderSerializer(serializers.ModelSerializer):
     manager = serializers.CharField(source="manager.last_name", read_only=True)
     group = GroupSerializer(read_only=True)
     group_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+
+    name = serializers.CharField(required=False, allow_blank=True,allow_null=True)
+    surname = serializers.CharField(required=False, allow_blank=True,allow_null=True)
+    email = serializers.CharField(required=False, allow_blank=True, allow_null=True,validators=[validate_no_spaces])
+    phone = serializers.CharField(required=False, allow_blank=True,allow_null=True)
+    utm = serializers.CharField(required=False, allow_blank=True,allow_null=True, validators=[validate_no_spaces])
+    msg = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    age = serializers.IntegerField(required=False, allow_null=True, validators=[validate_positive])
+    sum = serializers.IntegerField(required=False, allow_null=True, validators=[validate_positive])
+    alreadyPaid = serializers.IntegerField(required=False, allow_null=True, validators=[validate_positive])
 
     class Meta:
         model = Order

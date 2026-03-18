@@ -3,11 +3,12 @@
 import {useState} from 'react'
 import api from '@/services/axios.api.services'
 
-interface ExportExcelComponentProps {
+interface ExportExcelProps {
     filters: Record<string, string | boolean>
+    ordering?: string
 }
 
-export const ExportExcelComponent = ({filters}: ExportExcelComponentProps) => {
+export const ExportExcelComponent = ({filters, ordering}: ExportExcelProps) => {
     const [loading, setLoading] = useState(false)
 
     const handleExport = async () => {
@@ -15,8 +16,13 @@ export const ExportExcelComponent = ({filters}: ExportExcelComponentProps) => {
             setLoading(true)
             const params = new URLSearchParams()
             Object.entries(filters).forEach(([key, value]) => {
-                if (value) params.set(key, String(value))
+                if (value !== undefined && value !== null && value !== '') {
+                    params.set(key, String(value))
+                }
             })
+            if (ordering && ordering.trim()) {
+                params.set('ordering', ordering)
+            }
 
             const response = await api.get(`/orders/export/?${params.toString()}`, {
                 responseType: 'blob',

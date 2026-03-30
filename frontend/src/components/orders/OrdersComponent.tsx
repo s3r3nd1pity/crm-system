@@ -64,7 +64,7 @@ export const OrdersComponent = () => {
 
     return (
         <div className="p-6">
-            <OrdersFiltersComponent ordering={ordering}/>
+            <OrdersFiltersComponent/>
             {loading ? (
                 <div className="flex justify-center items-center h-64 text-pink-500 text-lg">
                     Loading orders...

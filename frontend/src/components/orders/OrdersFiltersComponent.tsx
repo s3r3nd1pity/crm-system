@@ -75,24 +75,33 @@ export const OrdersFiltersComponent = () => {
         }
         loadGroups()
     }, [])
-
+    const isFirstRender = useRef(true)
     useEffect(() => {
-        const handler = setTimeout(() => {
-            const params = new URLSearchParams()
-            Object.entries(filters).forEach(([k, v]) => {
-                if (v !== '' && v !== false) params.set(k, String(v))
-            })
-            const currentOrdering = searchParams.get('ordering') || ''
-            if (currentOrdering) params.set('ordering', currentOrdering)
+            const handler = setTimeout(() => {
+                const params = new URLSearchParams(searchParams.toString())
+                Object.entries(filters).forEach(([k, v]) => {
+                    if (v !== '' && v !== false) {
+                        params.set(k, String(v))
+                    } else {
+                        params.delete(k)
+                    }
+                })
+                const currentOrdering = searchParams.get('ordering') || ''
+                if (currentOrdering) params.set('ordering', currentOrdering)
+                if (!isFirstRender.current) {
+                    params.delete('page')
+                }
 
-            const s = params.toString()
-            if (s !== prevParams.current) {
-                prevParams.current = s
-                router.replace(`?${s}`, {scroll: false})
-            }
-        }, 500)
-        return () => clearTimeout(handler)
-    }, [filters, searchParams.toString(), router])
+                const s = params.toString()
+                if (s !== prevParams.current) {
+                    prevParams.current = s
+                    router.replace(`?${s}`, {scroll: false})
+                }
+                isFirstRender.current = false
+            }, 500)
+            return () => clearTimeout(handler)
+        }, [filters, searchParams.toString(), router]
+    )
 
     const updateQuery = (key: string, value: string | boolean) => {
         setFilters(prev => {

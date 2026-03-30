@@ -1,4 +1,4 @@
-do# CRM System
+# CRM System
 
 Full-stack CRM application built with **Django REST Framework (backend)** and **Next.js (frontend)**.  
 Implements authentication (JWT), manager/admin roles, orders management, comments, export to Excel, and password recovery/activation flows.
